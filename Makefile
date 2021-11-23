@@ -5,7 +5,7 @@ TARGET := bin/server bin/client
 
 SOURCES := $(shell find $(SRC) -type f -name *.c)
 OBJECTS := $(patsubst $(SRC)/%,$(BUILD)/%,$(SOURCES:.c=.o))
-CFLAGS := -g -Wall
+CFLAGS := -g -Wall -Wno-unused-function
 LIB :=
 INC := -I include
 

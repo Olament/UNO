@@ -112,12 +112,13 @@ int serialize_card(char* buffer, card_t* card) {
     return offset;
 }
 
-int deserialize_card(char* buffer, card_t* card) {
+int deserialize_card(char* buffer, card_t** card) {
     int offset = 0;
 
-    offset += deserialize_int(buffer + offset, (int*)(&(card->type))) + 1;
-    offset += deserialize_int(buffer + offset, (int*)(&(card->color))) + 1;
-    offset += deserialize_int(buffer + offset, &(card->number)) + 1;
+    (*card) = malloc(sizeof(card_t));
+    offset += deserialize_int(buffer + offset, (int*)&(*card)->type) + 1;
+    offset += deserialize_int(buffer + offset, (int*)&(*card)->color) + 1;
+    offset += deserialize_int(buffer + offset, (int*)&(*card)->number) + 1;
 
     return offset;
 }
@@ -133,14 +134,15 @@ int serialize_player_status(char* buffer, player_status_t* player) {
     return offset;
 }
 
-int deserialize_player_status(char* buffer, player_status_t* player) {
+int deserialize_player_status(char* buffer, player_status_t** player) {
     int offset = 0;
 
+    (*player) = malloc(sizeof(player_status_t));
     int name_length = strlen(buffer + offset);
-    player->player_name = malloc(sizeof(char) * name_length + 1);
-    strcpy(player->player_name, buffer);
+    (*player)->player_name = malloc(sizeof(char) * name_length + 1);
+    strcpy((*player)->player_name, buffer);
     offset += name_length + 1;
-    offset += deserialize_int(buffer + offset, &(player->cards_count)) + 1;
+    offset += deserialize_int(buffer + offset, &((*player)->cards_count)) + 1;
 
     return offset;
 }
@@ -159,17 +161,67 @@ int serialize_game_status(char* buffer, game_status_t* status) {
     return offset;
 }
 
-int deserialize_game_status(char* buffer, game_status_t* status) {
+int deserialize_game_status(char* buffer, game_status_t** status) {
     int offset = 0;
 
-    offset += deserialize_int(buffer + offset, &(status->player_count)) + 1;
-    offset += deserialize_int(buffer + offset, &(status->current_player)) + 1;
-    offset += deserialize_int(buffer + offset, &(status->direction)) + 1;
-    status->players = malloc(sizeof(player_status_t*) * status->player_count);
-    for (int i = 0; i < status->player_count; i++) {
-        status->players[i] = malloc(sizeof(player_status_t));
-        offset += deserialize_player_status(buffer + offset, status->players[i]) + 1;
+    (*status) = malloc(sizeof(game_status_t));
+    offset += deserialize_int(buffer + offset, &(*status)->player_count) + 1;
+    offset += deserialize_int(buffer + offset, &(*status)->current_player) + 1;
+    offset += deserialize_int(buffer + offset, &(*status)->direction) + 1;
+    (*status)->players = malloc(sizeof(player_status_t*) * (*status)->player_count);
+    for (int i = 0; i < (*status)->player_count; i++) {
+        (*status)->players[i] = malloc(sizeof(player_status_t));
+        offset += deserialize_player_status(buffer + offset, &(*status)->players[i]) + 1;
     }
 
     return offset;
+}
+
+void send_payload(int fd, char* buffer, enum MessageType type, void* payload) {
+    int offset = 0;
+
+    // write message type
+    offset += sprintf(buffer, "%d", type) + 1;
+
+    switch (type) {
+        case NOTIFICATION:
+            strcpy(&buffer[offset], payload);
+            offset += strlen(payload) + 1;
+            break;
+        case STATUS:
+            offset += serialize_game_status(&buffer[offset], payload) + 1;
+            break;
+        case CARD:
+            offset += serialize_card(&buffer[offset], payload) + 1;
+            break;
+    }
+
+    // send the message
+    send_message(fd, buffer, offset);
+}
+
+int receive_payload(int fd, void** payload) {
+    char* message = receive_message(fd);
+    char* p = message;
+
+    // get the message type
+    enum MessageType type;
+    p += deserialize_int(message, (int*)&type) + 1;
+
+    // deserialize the payload
+    switch (type) {
+        case NOTIFICATION:
+            (*payload) = malloc(sizeof(char) * strlen(p) + 1);
+            strcpy(*payload, p);
+            break;
+        case STATUS:
+            deserialize_game_status(p, (game_status_t**)payload);
+            break;
+        case CARD:
+            deserialize_card(p, (card_t**)payload);
+            break;
+    }
+
+    free(message);
+    return type;
 }

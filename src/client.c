@@ -5,7 +5,11 @@
 
 #include "card.h"
 #include "socket.h"
+#include "status.h"
 #include "message.h"
+
+// socket buffer
+char buffer[MAX_MESSAGE_LENGTH];
 
 int main(int argc, char** argv) {
     if (argc != 4) {
@@ -26,11 +30,14 @@ int main(int argc, char** argv) {
     }
 
     // send server your username
-    char buffer[MAX_MESSAGE_LENGTH];
-    int offset = 0;
-    offset += sprintf(buffer, "%d", NOTIFICATION) + 1;
-    strcpy(&buffer[offset], username);
-    offset += strlen(username);
+    send_payload(socket_fd, buffer, NOTIFICATION, username);
+    printf("sent\n");
 
-    send_message(socket_fd, buffer, offset);
+    card_t* card = NULL;
+    receive_payload(socket_fd, (void**)&card);
+    print_card(card);
+
+    game_status_t* status;
+    receive_payload(socket_fd, (void**)&status);
+    print_game_status(status);
 }

@@ -2,10 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "card.h"
 #include "message.h"
 #include "socket.h"
+#include "status.h"
+
+// socket buffer
+char buffer[MAX_MESSAGE_LENGTH];
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -51,20 +56,14 @@ int main(int argc, char** argv) {
         }
 
         player_fds[i] = client_socket_fd;
-        char* message = receive_message(client_socket_fd);
-
-        enum MessageType type;
-        message += deserialize_int(message, &type) + 1;
-        if (type != NOTIFICATION) {
-            perror("Unexpected message type");
-            exit(EXIT_FAILURE);
-        }
-
-        int username_length = strlen(message);
-        game_status->players[i]->player_name = malloc(sizeof(username_length) + 1);
-        strcpy(game_status->players[i]->player_name, message);
+        receive_payload(client_socket_fd, (void**)&game_status->players[i]->player_name);
         printf("player %s connected\n", game_status->players[i]->player_name);
     }
+
+    print_card(&uno_cards[50]);
+    send_payload(player_fds[0], buffer, CARD, &uno_cards[50]);
+
+    send_payload(player_fds[0], buffer, STATUS, game_status);
 }
 
 void init_cards(card_t cards[UNO_DECK_SIZE]) {
@@ -100,7 +99,14 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
         cards[index++].type = WILD_DRAW;
     }
 
-    // TODO: Fisher Shuffle
+    // shuffle the cards
+    srand(time(NULL));
+    for (int i = UNO_DECK_SIZE-1; i >= 0; i--) {
+        int random_index = rand() % (i+1); // pick a random index between [0, i]
+        card_t temp_card = cards[i];
+        cards[i] = cards[random_index];
+        cards[random_index] = temp_card;
+    }
 }
 
 void init_game_status(game_status_t* status, int match_size) {
