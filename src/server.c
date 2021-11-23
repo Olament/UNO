@@ -9,6 +9,8 @@
 #include "socket.h"
 #include "status.h"
 
+#define DEFAULT_PORT 8888
+
 // socket buffer
 char buffer[MAX_MESSAGE_LENGTH];
 
@@ -32,7 +34,7 @@ int main(int argc, char** argv) {
     init_game_status(game_status, match_size);
 
     // Open a server socket
-    unsigned short port = 0;
+    unsigned short port = DEFAULT_PORT;
     int server_socket_fd = server_socket_open(&port);
     if (server_socket_fd == -1) {
         perror("Server socket was not opened");
