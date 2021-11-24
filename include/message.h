@@ -14,7 +14,7 @@ enum MessageType {
     CARD,
 };
 
-void send_payload(int fd, char* buffer, enum MessageType type, void* payload);
+void send_payload(int fd, enum MessageType type, void* payload);
 
 int receive_payload(int fd, void** payload);
 

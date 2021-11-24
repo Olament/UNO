@@ -177,7 +177,8 @@ int deserialize_game_status(char* buffer, game_status_t** status) {
     return offset;
 }
 
-void send_payload(int fd, char* buffer, enum MessageType type, void* payload) {
+void send_payload(int fd, enum MessageType type, void* payload) {
+    char* buffer = malloc(sizeof(char) * MAX_MESSAGE_LENGTH);
     int offset = 0;
 
     // write message type
@@ -198,6 +199,8 @@ void send_payload(int fd, char* buffer, enum MessageType type, void* payload) {
 
     // send the message
     send_message(fd, buffer, offset);
+    // release buffer
+    free(buffer);
 }
 
 int receive_payload(int fd, void** payload) {
