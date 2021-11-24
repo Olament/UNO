@@ -153,6 +153,7 @@ int serialize_game_status(char* buffer, game_status_t* status) {
     offset += sprintf(buffer + offset, "%d", status->player_count) + 1;
     offset += sprintf(buffer + offset, "%d", status->current_player) + 1;
     offset += sprintf(buffer + offset, "%d", status->direction) + 1;
+    offset += sprintf(buffer + offset, "%d", status->current_color) + 1;
     for (int i = 0; i < status->player_count; i++) {
         offset += serialize_player_status(buffer + offset, status->players[i]) + 1;
     }
@@ -168,6 +169,7 @@ int deserialize_game_status(char* buffer, game_status_t** status) {
     offset += deserialize_int(buffer + offset, &(*status)->player_count) + 1;
     offset += deserialize_int(buffer + offset, &(*status)->current_player) + 1;
     offset += deserialize_int(buffer + offset, &(*status)->direction) + 1;
+    offset += deserialize_int(buffer + offset, (int*)&(*status)->current_color) + 1;
     (*status)->players = malloc(sizeof(player_status_t*) * (*status)->player_count);
     for (int i = 0; i < (*status)->player_count; i++) {
         (*status)->players[i] = malloc(sizeof(player_status_t));
