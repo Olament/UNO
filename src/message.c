@@ -172,7 +172,6 @@ int deserialize_game_status(char* buffer, game_status_t** status) {
     offset += deserialize_int(buffer + offset, (int*)&(*status)->current_color) + 1;
     (*status)->players = malloc(sizeof(player_status_t*) * (*status)->player_count);
     for (int i = 0; i < (*status)->player_count; i++) {
-        (*status)->players[i] = malloc(sizeof(player_status_t));
         offset += deserialize_player_status(buffer + offset, &(*status)->players[i]) + 1;
     }
 
