@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <ncurses.h>
 
 #include "card.h"
 #include "message.h"
@@ -10,9 +11,17 @@
 #include "status.h"
 
 #define DEFAULT_PORT 8888
+#define INIT_CARDS_SIZE 7
 
 // socket buffer
 char buffer[MAX_MESSAGE_LENGTH];
+
+void notify_all(char* message, int* player_fds, int match_size) {
+    for (int i = 0; i < match_size; i++) {
+        send_payload(player_fds[i], NOTIFICATION, message);
+    }
+}
+
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -28,6 +37,7 @@ int main(int argc, char** argv) {
 
     card_t uno_cards[UNO_DECK_SIZE];
     init_cards(uno_cards);
+    int next_card = 0;
 
     // init the game status
     game_status_t* game_status = malloc(sizeof(game_status_t));
@@ -62,10 +72,84 @@ int main(int argc, char** argv) {
         printf("player %s connected\n", game_status->players[i]->player_name);
     }
 
-    print_card(&uno_cards[50]);
-    send_payload(player_fds[0], buffer, CARD, &uno_cards[50]);
+    // have enough player, init the game
+    game_status->previous_card->type = NUMBER;
+    game_status->previous_card->color = rand() % 4;
+    game_status->previous_card->number = rand() % 10;
+    for (int i = 0; i < match_size; i++) {
+        for (int j = 0; j < INIT_CARDS_SIZE; j++) {
+            send_payload(player_fds[i], CARD, &uno_cards[next_card++]);
+        }
+        game_status->players[i]->cards_count = INIT_CARDS_SIZE;
+    }
 
-    send_payload(player_fds[0], buffer, STATUS, game_status);
+    
+    for (;;) {
+        // send the game status to everyone
+        int current_fd = player_fds[game_status->current_player];
+        for (int i = 0; i < match_size; i++) {
+            send_payload(player_fds[i], STATUS, game_status);
+        }
+        send_payload(current_fd, NOTIFICATION, "Your turn!");
+
+        // wait the current player to response
+        void* payload = NULL;
+        int type = receive_payload(current_fd, &payload);
+
+        if (type == NOTIFICATION) {
+            send_payload(current_fd, CARD, &uno_cards[next_card++]); // eventually check for space
+        } else if (type == CARD) {
+            card_t* card = (card_t*) payload;
+            game_status->players[game_status->current_player]->cards_count--;
+            game_status->previous_card->type = card->type;
+            game_status->previous_card->color = card->color;
+            game_status->previous_card->number = card->number;
+
+            switch (card->type) {
+                case NUMBER: 
+                    break;
+                case SKIP:
+                    game_status->current_player = (game_status->current_player + game_status->direction) 
+                        % game_status->player_count;
+                    current_fd = player_fds[game_status->current_player];
+                    send_payload(current_fd, NOTIFICATION, "Your turn was skipped.");
+                    break;
+                case REVERSE:
+                    game_status->direction *= -1;
+                    notify_all("The direction has been reversed.", player_fds, match_size);
+                    break;
+                case DRAW_TWO:
+                    game_status->current_player = (game_status->current_player + game_status->direction) 
+                        % game_status->player_count;
+                    current_fd = player_fds[game_status->current_player];
+                    send_payload(current_fd, CARD, &uno_cards[next_card++]);
+                    send_payload(current_fd, CARD, &uno_cards[next_card++]);
+                    send_payload(current_fd, NOTIFICATION, "You received two cards and your turn was skipped.");
+                    break;
+                case WILD:
+                case WILD_DRAW:
+                    send_payload(current_fd, NOTIFICATION, "Please select a color");
+                    card_t* wildcard;
+                    receive_payload(current_fd, (void**)&wildcard);
+                    game_status->previous_card->color = wildcard->color;
+                    free(wildcard);
+                    if (card->type == WILD_DRAW) {
+                        game_status->current_player = (game_status->current_player + game_status->direction) 
+                        % game_status->player_count;
+                        current_fd = player_fds[game_status->current_player];
+                        for (int i = 0; i < 4; i++) {
+                            send_payload(current_fd, CARD, &uno_cards[next_card++]);
+                        }
+                    send_payload(current_fd, NOTIFICATION, "You received four cards and your turn was skipped.");
+                    }
+
+                    break;
+            }
+        }
+        game_status->current_player = (game_status->current_player + game_status->direction) 
+                % game_status->player_count;
+        
+    }
 }
 
 void init_cards(card_t cards[UNO_DECK_SIZE]) {
@@ -89,6 +173,7 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
         for (int type = SKIP; type <= DRAW_TWO; type++) {
             cards[index].type = type;
             cards[index].color = color;
+            cards[index].number = -1;
             index++;
             cards[index] = cards[index-1];
             index++;
@@ -97,7 +182,11 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
 
     // 4 x WILD and 4 x WILD_DRAW
     for (int i = 0; i < 4; i++) {
+        cards[index].number = -1;
+        cards[index].color = NO_COLOR;
         cards[index++].type = WILD;
+        cards[index].number = -1;
+        cards[index].color = NO_COLOR;
         cards[index++].type = WILD_DRAW;
     }
 
@@ -115,6 +204,7 @@ void init_game_status(game_status_t* status, int match_size) {
     status->player_count = match_size;
     status->direction = 1;
     status->current_player = 0;
+    status->previous_card = malloc(sizeof(card_t));
     status->players = malloc(sizeof(player_status_t*) * match_size);
     for (int i = 0; i < match_size; i++) {
         status->players[i] = malloc(sizeof(player_status_t));

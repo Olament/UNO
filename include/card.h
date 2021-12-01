@@ -15,6 +15,7 @@ enum CardColor {
     YELLOW,
     GREEN,
     BLUE,
+    NO_COLOR
 };
 
 typedef struct card {
@@ -24,14 +25,7 @@ typedef struct card {
 } card_t;
 
 static void print_card(card_t* card) {
-    if (card->type == WILD_DRAW) {
-        printf("WILD_DRAW\n");
-        return;
-    }
-    if (card->type == WILD) {
-        printf("WILD\n");
-        return;
-    }
+
     switch (card->color) {
         case RED:
             printf("RED "); break;
@@ -41,6 +35,8 @@ static void print_card(card_t* card) {
             printf("GREEN "); break;
         case BLUE:
             printf("BLUE "); break;
+        case NO_COLOR:
+            break;
     }
     switch (card->type) {
         case NUMBER:
@@ -51,6 +47,10 @@ static void print_card(card_t* card) {
             printf("REVERSE\n"); break;
         case DRAW_TWO:
             printf("DRAW_TWO\n"); break;
+        case WILD:
+            printf("WILD\n"); break;
+        case WILD_DRAW:
+            printf("WILD_DRAW\n"); break;
         default:
             break;
     }
