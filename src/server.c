@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
                     break;
                 case DRAW_TWO:
                     next_player(game_status);
+                    game_status->players[game_status->current_player]->cards_count += 2;
                     current_fd = player_fds[game_status->current_player];
                     send_payload(current_fd, CARD, &uno_cards[next_card++]);
                     send_payload(current_fd, CARD, &uno_cards[next_card++]);
@@ -141,6 +142,7 @@ int main(int argc, char** argv) {
                     free(wildcard);
                     if (card->type == WILD_DRAW) {
                         next_player(game_status);
+                        game_status->players[game_status->current_player]->cards_count += 4;
                         current_fd = player_fds[game_status->current_player];
                         for (int i = 0; i < 4; i++) {
                             send_payload(current_fd, CARD, &uno_cards[next_card++]);
