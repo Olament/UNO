@@ -105,6 +105,7 @@ int main(int argc, char** argv) {
 
         if (type == NOTIFICATION) {
             send_payload(current_fd, CARD, &uno_cards[next_card++]); // eventually check for space
+            game_status->players[game_status->current_player]->cards_count++;
         } else if (type == CARD) {
             card_t* card = (card_t*) payload;
             game_status->players[game_status->current_player]->cards_count--;
