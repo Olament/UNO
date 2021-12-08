@@ -87,7 +87,6 @@ int deserialize_int(char* buffer, int* integer) {
     // if the first char is '-' sign
     if (buffer[offset] == '-') {
         sign = -1;
-        buffer++;
         offset++;
     }
 
