@@ -153,6 +153,19 @@ int main(int argc, char** argv) {
                     break;
             }
         }
+
+        // winning check
+        if (game_status->players[game_status->current_player]->cards_count == 0) {
+            for (int player_index = 0; player_index < game_status->player_count; player_index++) {
+                if (player_index == game_status->current_player) {
+                    send_payload(player_fds[player_index], NOTIFICATION, "You win!");
+                } else {
+                    send_payload(player_fds[player_index], NOTIFICATION, "You lose, sorry.");
+                }
+            }
+            return 0;
+        }
+
         next_player(game_status);
     }
 }
