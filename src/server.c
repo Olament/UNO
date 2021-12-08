@@ -3,7 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <ncurses.h>
 
 #include "card.h"
 #include "message.h"
@@ -22,6 +21,14 @@ void notify_all(char* message, int* player_fds, int match_size) {
     }
 }
 
+// move the game to next player
+void next_player(game_status_t* game_status) {
+    game_status->current_player = (game_status->current_player + game_status->direction) 
+                % game_status->player_count;
+    if (game_status->current_player < 0) {
+        game_status->current_player += game_status->player_count;
+    }
+}
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -109,8 +116,7 @@ int main(int argc, char** argv) {
                 case NUMBER: 
                     break;
                 case SKIP:
-                    game_status->current_player = (game_status->current_player + game_status->direction) 
-                        % game_status->player_count;
+                    next_player(game_status);
                     current_fd = player_fds[game_status->current_player];
                     send_payload(current_fd, NOTIFICATION, "Your turn was skipped.");
                     break;
@@ -119,8 +125,7 @@ int main(int argc, char** argv) {
                     notify_all("The direction has been reversed.", player_fds, match_size);
                     break;
                 case DRAW_TWO:
-                    game_status->current_player = (game_status->current_player + game_status->direction) 
-                        % game_status->player_count;
+                    next_player(game_status);
                     current_fd = player_fds[game_status->current_player];
                     send_payload(current_fd, CARD, &uno_cards[next_card++]);
                     send_payload(current_fd, CARD, &uno_cards[next_card++]);
@@ -134,8 +139,7 @@ int main(int argc, char** argv) {
                     game_status->previous_card->color = wildcard->color;
                     free(wildcard);
                     if (card->type == WILD_DRAW) {
-                        game_status->current_player = (game_status->current_player + game_status->direction) 
-                        % game_status->player_count;
+                        next_player(game_status);
                         current_fd = player_fds[game_status->current_player];
                         for (int i = 0; i < 4; i++) {
                             send_payload(current_fd, CARD, &uno_cards[next_card++]);
@@ -146,9 +150,7 @@ int main(int argc, char** argv) {
                     break;
             }
         }
-        game_status->current_player = (game_status->current_player + game_status->direction) 
-                % game_status->player_count;
-        
+        next_player(game_status);
     }
 }
 
