@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 
                 if (strcmp(notification, "Your turn!") == 0) {
                     // print out available options
-                    printf(" -------------------------\n");
+                    printf("-----------------------------\n");
                     printf("Your Options:\n ");
                     printf("    0: Draw a card\n");
                     for (int i = 0; i < deck_size; i++) {
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
                     } while (!valid_input);
 
                 }
-                
+
                 break;
             }
             case STATUS: {

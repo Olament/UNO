@@ -17,17 +17,17 @@ typedef struct game_status {
 } game_status_t;
 
 static void print_game_status(game_status_t* status) {
-    printf("--------------------------\n");
-    printf("Game Status:\n");
-    printf("player count: %d current player: %d direction: %s\n",
-           status->player_count, status->current_player,
-           status->direction == 1 ? "FORWARD" : "BACKWARD");
-    printf("--------------------------\n");
+    // printf("--------------------------\n");
+    // printf("Game Status:\n");
+    // printf("Player count: %d  Current player: %d Direction: %s\n",
+    //        status->player_count, status->current_player,
+    //        status->direction == 1 ? "FORWARD" : "BACKWARD");
+    printf("-----------------------------\n");
     printf("#:    Players:  No. of cards:\n");
     for (int i = 0; i < status->player_count; i++) {
         printf("%d: %10s %14d\n", i, status->players[i]->player_name, status->players[i]->cards_count);
     }
-    printf("--------------------------\n");
+    printf("-----------------------------\n");
     printf("TOP CARD: ");
     print_card(status->previous_card);
 }
