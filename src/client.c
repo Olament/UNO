@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "card.h"
 #include "socket.h"
@@ -71,13 +72,38 @@ int main(int argc, char** argv) {
                     }
 
                     // user selection
-                    bool valid_input = false;
+                    bool valid_input = true;
                     do {
-                        int index_selected = 0;
+                        
                         printf("select one of the indices above\ninput: ");
-                        scanf("%d", &index_selected);
-                        // check if the range is valid
-                        if (index_selected < 0 || index_selected > deck_size) {
+                        // scanf("%c", &index_chr);
+                        // // check if the range is valid
+                        // if (!isdigit(index_selected)) {
+                        //     printf("invalid input!\n");
+                        //     continue;
+                        // }
+                        char input[4] = "";
+                        int length,i; 
+                        
+                        scanf("%s", input);
+                        length = strlen (input);
+                        for (i=0;i<length; i++){
+                            if (!isdigit(input[i])){
+                                valid_input = false;
+                            }
+                        }
+
+                        if (valid_input) {
+                            valid_input = false;
+                        } else {
+                            printf("Entered input is not a number\n");
+                            continue;
+                        }
+
+
+                        int index_selected = atoi(input);
+
+                        if (index_selected < 0 || index_selected > deck_size || index_selected > 107) {
                             printf("invalid input!\n");
                             continue;
                         }
