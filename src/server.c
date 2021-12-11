@@ -9,7 +9,7 @@
 #include "socket.h"
 #include "status.h"
 
-#define DEFAULT_PORT 8887
+#define DEFAULT_PORT 8886
 #define INIT_CARDS_SIZE 7
 
 // socket buffer
@@ -97,7 +97,9 @@ int main(int argc, char** argv) {
         for (int i = 0; i < match_size; i++) {
             send_payload(player_fds[i], STATUS, game_status);
         }
+
         send_payload(current_fd, NOTIFICATION, "Your turn!");
+        //print_card(game_status->previous_card);
 
         // wait the current player to response
         void* payload = NULL;
