@@ -9,7 +9,7 @@
 #include "socket.h"
 #include "status.h"
 
-#define DEFAULT_PORT 8888
+#define DEFAULT_PORT 8887
 #define INIT_CARDS_SIZE 7
 
 // socket buffer

@@ -65,9 +65,11 @@ int main(int argc, char** argv) {
 
                 if (strcmp(notification, "Your turn!") == 0) {
                     // print out available options
-                    printf(" 0: Draw a card\n");
+                    printf(" -------------------------\n");
+                    printf("Your Options:\n ");
+                    printf("    0: Draw a card\n");
                     for (int i = 0; i < deck_size; i++) {
-                        printf("%2d: ", i+1);
+                        printf("    %2d: ", i+1);
                         print_card(&player_deck[i]);
                     }
 
@@ -75,7 +77,7 @@ int main(int argc, char** argv) {
                     bool valid_input = true;
                     do {
                         
-                        printf("select one of the indices above\ninput: ");
+                        printf("Select one of the indices above\ninput: ");
                         // scanf("%c", &index_chr);
                         // // check if the range is valid
                         // if (!isdigit(index_selected)) {
