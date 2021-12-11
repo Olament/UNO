@@ -23,9 +23,9 @@ static void print_game_status(game_status_t* status) {
            status->player_count, status->current_player,
            status->direction == 1 ? "FORWARD" : "BACKWARD");
     printf("--------------------------\n");
-    printf("Players:\n");
+    printf("#:    Players:  No. of cards:\n");
     for (int i = 0; i < status->player_count; i++) {
-        printf("%d: %10s %d\n", i, status->players[i]->player_name, status->players[i]->cards_count);
+        printf("%d: %10s %14d\n", i, status->players[i]->player_name, status->players[i]->cards_count);
     }
     printf("--------------------------\n");
     printf("TOP CARD: ");

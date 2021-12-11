@@ -25,7 +25,6 @@ typedef struct card {
 } card_t;
 
 static void print_card(card_t* card) {
-
     switch (card->color) {
         case RED:
             printf("RED "); break;
