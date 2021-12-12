@@ -11,11 +11,11 @@ enum CardType {
 };
 
 enum CardColor {
+    NO_COLOR,
     RED,
     YELLOW,
     GREEN,
     BLUE,
-    NO_COLOR
 };
 
 typedef struct card {

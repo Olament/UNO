@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 
     // have enough player, init the game
     game_status->previous_card->type = NUMBER;
-    game_status->previous_card->color = rand() % 4;
+    game_status->previous_card->color = rand() % 4 + 1;
     game_status->previous_card->number = rand() % 10;
     for (int i = 0; i < match_size; i++) {
         send_payload(player_fds[i], NOTIFICATION, "-----------------------------");

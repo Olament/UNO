@@ -9,6 +9,7 @@
 #include "socket.h"
 #include "status.h"
 #include "message.h"
+#include "ui.h"
 
 bool card_match(card_t* previous, card_t* current) {
     if (current->type == WILD || current->type == WILD_DRAW) {
@@ -48,11 +49,22 @@ int main(int argc, char** argv) {
     send_payload(socket_fd, NOTIFICATION, username);
 
     // current deck
-    card_t player_deck[UNO_DECK_SIZE];
+    card_t** player_deck = malloc(sizeof(card_t*) * UNO_DECK_SIZE);
     int deck_size = 0;
 
-    // game status
-    game_status_t* status = NULL;
+    // init game options
+    render_options_t* options = malloc(sizeof(render_options_t));
+    options->highlight_card = false;
+    options->highlight_card_select = false;
+    options->highlight_draw_button = false;
+    options->cards = player_deck;
+    options->deck_size = 0;
+    options->card_index = 0;
+    options->message_list = malloc(sizeof(message_list_t));
+    message_list_init(options->message_list);
+
+    // start ui
+    ui_init();
 
     // game started
     for (;;) {
@@ -61,108 +73,62 @@ int main(int argc, char** argv) {
         switch (message_type) {
             case NOTIFICATION: {
                 char* notification = (char*) message;
-                printf("%s\n", notification);
 
                 if (strcmp(notification, "Your turn!") == 0) {
-                    // print out available options
-                    printf("-----------------------------\n");
-                    printf("Your Options:\n ");
-                    printf("    0: Draw a card\n");
-                    for (int i = 0; i < deck_size; i++) {
-                        printf("    %2d: ", i+1);
-                        print_card(&player_deck[i]);
+                    // pick a card until we get a valid one
+                    int card_index = -1;
+                    do {
+                        card_index = choose_card_ui(options);
+                    } while (card_index != -1 && !card_match(options->game_status->previous_card, player_deck[card_index]));
+
+                    if (card_index == -1) {
+                        // draw a new card
+                        send_payload(socket_fd, NOTIFICATION, "draw a new card");
+                    } else {
+                        // play a card
+                        card_t* selected_card = player_deck[card_index];
+                        send_payload(socket_fd, CARD, selected_card);
+
+                        // sync status
+                        player_deck[card_index] = player_deck[deck_size-1];
+                        deck_size -= 1;
+                        options->deck_size -= 1;
+
+                        free(selected_card);
                     }
-
-                    // user selection
-                    bool valid_input = true;
-                    do {
-                        
-                        printf("Select one of the indices above\ninput: ");
-                        // scanf("%c", &index_chr);
-                        // // check if the range is valid
-                        // if (!isdigit(index_selected)) {
-                        //     printf("invalid input!\n");
-                        //     continue;
-                        // }
-                        char input[4] = "";
-                        int length,i; 
-                        
-                        scanf("%s", input);
-                        length = strlen (input);
-                        for (i=0;i<length; i++){
-                            if (!isdigit(input[i])){
-                                valid_input = false;
-                            }
-                        }
-
-                        if (valid_input) {
-                            valid_input = false;
-                        } else {
-                            printf("Entered input is not a number\n");
-                            continue;
-                        }
-
-
-                        int index_selected = atoi(input);
-
-                        if (index_selected < 0 || index_selected > deck_size || index_selected > 107) {
-                            printf("invalid input!\n");
-                            continue;
-                        }
-                        // check if card to play is valid
-                        if (index_selected == 0) {
-                            // draw a new card
-                            send_payload(socket_fd, NOTIFICATION, "draw a new card");
-                            valid_input = true;
-                        } else {
-                            // play a card
-                            card_t selected_card = player_deck[index_selected-1];
-                            if (card_match(status->previous_card, &selected_card)) {
-                                    valid_input = true;
-                                    // send selected card to server
-                                    send_payload(socket_fd, CARD, &player_deck[index_selected-1]);
-                                    // remove the card from deck
-                                    player_deck[index_selected-1] = player_deck[deck_size-1];
-                                    deck_size--;
-                                } else {
-                                    printf("invalid card selection\n");
-                                }
-                        }
-                    } while (!valid_input);
                 }
-                
+
                 if (strcmp(notification, "Please select a color") == 0) {
-                    printf("0: RED\n1: YELLOW\n2: GREEN\n3: BLUE\n");
-                    int color_selected = 0;
-                    scanf("%d", &color_selected);
-                    bool valid_input = false;
-                    do {
-                        if (color_selected<0 || color_selected>3){
-                            printf("Invalid input!");
-                            continue;
-                        } 
-                        valid_input = true;
-                        card_t new_card;
-                        new_card.color = color_selected;
-                        send_payload(socket_fd, CARD, &new_card);
-                    } while (!valid_input);
-
+                    // select a color for WILD card
+                    int color_selected = popup_message(options, 4,
+                                                       "RED", "YELLOW", "GREEN", "BLUE");
+                    // send selection to server
+                    card_t new_card;
+                    new_card.color = color_selected + 1; // shift by 1 to skip NO_COLOR;
+                    send_payload(socket_fd, CARD, &new_card);
                 }
+
+                // add it to message box
+                message_list_add(options->message_list, notification);
+
+                free(message);
 
                 break;
             }
             case STATUS: {
-                status = (game_status_t*) message;
-                print_game_status(status);
+                // free previous game_status
+                if (options->game_status != NULL) free(options->game_status);
+                options->game_status = (game_status_t*) message;
                 break;
             }
             case CARD: {
-                card_t* card = (card_t*) message;
-                player_deck[deck_size++] = (*card);
-                print_card(card);
+                player_deck[deck_size] = (card_t*) message;
+                deck_size += 1;
+                options->deck_size += 1;
                 break;
             }
         }
-        free(message);
+
+        render_ui(options);
     }
 }
