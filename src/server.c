@@ -23,11 +23,7 @@ void notify_all(char* message, int* player_fds, int match_size) {
 
 // move the game to next player
 void next_player(game_status_t* game_status) {
-    game_status->current_player = (game_status->current_player + game_status->direction) 
-                % game_status->player_count;
-    if (game_status->current_player < 0) {
-        game_status->current_player += game_status->player_count;
-    }
+    game_status->current_player = (game_status->current_player + game_status->direction + game_status->player_count) % game_status->player_count;
 }
 
 int main(int argc, char** argv) {
