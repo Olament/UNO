@@ -21,15 +21,15 @@
 #define BUTTON_WIDTH 10
 
 // windows
-WINDOW* scoreboard_w;
-WINDOW* scoreboard_content_w;
-WINDOW* previous_card_w;
-WINDOW* message_w;
-WINDOW* message_content_w;
-WINDOW* card_selection_w;
-WINDOW* draw_button_w;
+WINDOW *scoreboard_w;
+WINDOW *scoreboard_content_w;
+WINDOW *previous_card_w;
+WINDOW *message_w;
+WINDOW *message_content_w;
+WINDOW *card_selection_w;
+WINDOW *draw_button_w;
 int cards_number; // numbers of card windows
-WINDOW** cards_w;
+WINDOW **cards_w;
 
 int max(int num1, int num2) {
     return num1 > num2 ? num1 : num2;
@@ -39,16 +39,16 @@ int min(int num1, int num2) {
     return num1 < num2 ? num1 : num2;
 }
 
-void message_list_init(message_list_t* list) {
+void message_list_init(message_list_t *list) {
     list->head = NULL;
     list->tail = NULL;
     list->message_count = 0;
 }
 
 // add a new message to message_list by making a copy of message
-void message_list_add(message_list_t* list, char* message) {
+void message_list_add(message_list_t *list, char *message) {
     // allocating new message
-    message_t* new_message = malloc(sizeof(message_t));
+    message_t *new_message = malloc(sizeof(message_t));
     time(&new_message->message_time);
     new_message->message_body = malloc(sizeof(char) * (strlen(message) + 1));
     strcpy(new_message->message_body, message);
@@ -64,17 +64,17 @@ void message_list_add(message_list_t* list, char* message) {
 
     // remove extra message
     while (list->message_count > 5) { // todo: find a better number
-        message_t* old_node = list->head;
+        message_t *old_node = list->head;
         list->head = list->head->next;
         free(old_node);
         list->message_count -= 1;
     }
 }
 
-void message_list_destroy(message_list_t* list) {
-    message_t* curr = list->head;
+void message_list_destroy(message_list_t *list) {
+    message_t *curr = list->head;
     while (curr != NULL) {
-        message_t* next = curr->next;
+        message_t *next = curr->next;
         free(curr->message_body);
         free(curr);
         curr = next;
@@ -116,7 +116,8 @@ void ui_init() {
                                   scoreboard_content_start_y, scoreboard_content_start_x);
 
     int previous_card_start_y = (scoreboard_height - CARD_HEIGHT) / 2;
-    int previous_card_start_x = scoreboard_start_x + scoreboard_width + ((max_width - scoreboard_width - CARD_WIDTH) / 2);
+    int previous_card_start_x =
+            scoreboard_start_x + scoreboard_width + ((max_width - scoreboard_width - CARD_WIDTH) / 2);
 
     previous_card_w = newwin(CARD_HEIGHT, CARD_WIDTH,
                              previous_card_start_y, previous_card_start_x);
@@ -162,7 +163,7 @@ void ui_init() {
     draw_button_w = newwin(button_height, BUTTON_WIDTH,
                            button_start_y, button_start_x);
 
-    cards_w = malloc(sizeof(WINDOW*) * cards_number);
+    cards_w = malloc(sizeof(WINDOW *) * cards_number);
     for (int i = 0; i < cards_number; i++) {
         cards_w[i] = newwin(CARD_HEIGHT, CARD_WIDTH,
                             card_start_y, card_start_x);
@@ -187,7 +188,7 @@ void ui_exit() {
     endwin();
 }
 
-void render_scoreboard(render_options_t* options) {
+void render_scoreboard(render_options_t *options) {
     if (options->game_status == NULL) return;
 
     werase(scoreboard_content_w);
@@ -221,7 +222,7 @@ void render_scoreboard(render_options_t* options) {
     wrefresh(scoreboard_content_w);
 }
 
-void render_card(WINDOW* window, card_t* card, bool is_highlight) {
+void render_card(WINDOW *window, card_t *card, bool is_highlight) {
     werase(window);
 
     wbkgd(window, COLOR_PAIR(card->color));
@@ -235,49 +236,35 @@ void render_card(WINDOW* window, card_t* card, bool is_highlight) {
     switch (card->type) {
         case NUMBER:
             mvwprintw(window, 1, 1, "%d", card->number);
-            mvwprintw(window, CARD_HEIGHT-2, CARD_WIDTH-2, "%d", card->number);
+            mvwprintw(window, CARD_HEIGHT - 2, CARD_WIDTH - 2, "%d", card->number);
             break;
         case REVERSE:
-            mvwprintw(window, 1, 1, "REV"); break;
+            mvwprintw(window, 1, 1, "REV");
+            break;
         case SKIP:
-            mvwprintw(window, 1, 1, "SKIP"); break;
+            mvwprintw(window, 1, 1, "SKIP");
+            break;
         case DRAW_TWO:
-            mvwprintw(window, 1, 1, "DRAW"); break;
+            mvwprintw(window, 1, 1, "DRAW");
+            break;
         case WILD:
-            mvwprintw(window, 1, 1, "WD"); break;
+            mvwprintw(window, 1, 1, "WD");
+            break;
         case WILD_DRAW:
-            mvwprintw(window, 1, 1, "WDRAW"); break;
+            mvwprintw(window, 1, 1, "WDRAW");
+            break;
     }
 
     wrefresh(window);
 }
 
-void render_previous_card(render_options_t* options) {
+void render_previous_card(render_options_t *options) {
     if (options->game_status == NULL) return;
 
     render_card(previous_card_w, options->game_status->previous_card, false);
 }
 
-//void render_card(render_options_t* options, int windows_index, int card_index) {
-//    // erase previous card
-//    werase(cards_w[windows_index]);
-//
-//    // render color
-//    wbkgd(cards_w[windows_index], COLOR_PAIR(options->cards[card_index]->color));
-//
-//    // render highlight
-//    if (options->highlight_card && card_index == options->card_index) wattron(cards_w[windows_index], A_STANDOUT);
-//    box(cards_w[windows_index], 0, 0);
-//    if (options->highlight_card && card_index == options->card_index) wattroff(cards_w[windows_index], A_STANDOUT);
-//
-//    // render card face
-//    mvwprintw(cards_w[windows_index], 1, 1, "%d", options->cards[card_index]->number);
-//    mvwprintw(cards_w[windows_index], CARD_HEIGHT-2, CARD_WIDTH-2, "%d", options->cards[card_index]->number);
-//
-//    wrefresh(cards_w[windows_index]);
-//}
-
-void render_card_select(render_options_t* options) {
+void render_card_select(render_options_t *options) {
     // get width and height
     int height, width;
     getmaxyx(card_selection_w, height, width);
@@ -303,7 +290,7 @@ void render_card_select(render_options_t* options) {
     }
 }
 
-void render_draw_button(render_options_t* options) {
+void render_draw_button(render_options_t *options) {
     int width, height;
     getmaxyx(draw_button_w, width, height);
 
@@ -315,7 +302,7 @@ void render_draw_button(render_options_t* options) {
     wrefresh(draw_button_w);
 }
 
-void render_message(render_options_t* options) {
+void render_message(render_options_t *options) {
     werase(message_w);
 
     box(message_w, 0, 0);
@@ -323,9 +310,9 @@ void render_message(render_options_t* options) {
     wrefresh(message_w);
 
     // populate content windows with message
-    message_t* curr = options->message_list->head;
+    message_t *curr = options->message_list->head;
     while (curr != NULL) {
-        struct tm* time_info = localtime(&curr->message_time);
+        struct tm *time_info = localtime(&curr->message_time);
         wprintw(message_content_w,
                 "%02d:%02d:%02d %s\n", time_info->tm_hour, time_info->tm_min, time_info->tm_sec,
                 curr->message_body);
@@ -334,7 +321,7 @@ void render_message(render_options_t* options) {
     wrefresh(message_content_w);
 }
 
-void render_ui(render_options_t* options) {
+void render_ui(render_options_t *options) {
     render_scoreboard(options);
     render_previous_card(options);
     render_message(options);
@@ -342,7 +329,7 @@ void render_ui(render_options_t* options) {
     render_draw_button(options);
 }
 
-int choose_card_ui(render_options_t* options) {
+int choose_card_ui(render_options_t *options) {
     // reset and highlight card select by default
     options->card_index = 0;
     options->highlight_card_select = true;
@@ -373,7 +360,7 @@ int choose_card_ui(render_options_t* options) {
                     options->highlight_draw_button = true;
                 }
                 if (options->highlight_card) {
-                    options->card_index = min(options->deck_size-1, options->card_index + 1);
+                    options->card_index = min(options->deck_size - 1, options->card_index + 1);
                 }
                 break;
             case '\n':
@@ -409,13 +396,13 @@ int choose_card_ui(render_options_t* options) {
     return -1;
 }
 
-int popup_message(render_options_t* options, int nums, ...) {
+int popup_message(render_options_t *options, int nums, ...) {
     va_list va_list1, va_list2;
     va_start(va_list1, nums);
     va_copy(va_list2, va_list1);
 
     int max_length = 0;
-    char** menu_options = malloc(sizeof(char*) * nums);
+    char **menu_options = malloc(sizeof(char *) * nums);
     for (int i = 0; i < nums; i++) {
         menu_options[i] = malloc(sizeof(char) * (strlen(va_arg(va_list1, char*) + 1)));
         strcpy(menu_options[i], va_arg(va_list2, char*));
@@ -431,7 +418,7 @@ int popup_message(render_options_t* options, int nums, ...) {
     int popup_height = nums + 2 + (2 * PADDING);
     int popup_start_y = (max_height - popup_height) / 2;
     int popup_start_x = (max_width - popup_width) / 2;
-    WINDOW* popup_w = newwin(popup_height, popup_width,
+    WINDOW *popup_w = newwin(popup_height, popup_width,
                              popup_start_y, popup_start_x);
 
     int highlight_index = 0;
@@ -439,7 +426,7 @@ int popup_message(render_options_t* options, int nums, ...) {
         // rendering menu
         for (int i = 0; i < nums; i++) {
             if (i == highlight_index) wattron(popup_w, A_STANDOUT);
-            mvwprintw(popup_w, i+1+PADDING, 2 * PADDING, "%s", menu_options[i]);
+            mvwprintw(popup_w, i + 1 + PADDING, 2 * PADDING, "%s", menu_options[i]);
             if (i == highlight_index) wattroff(popup_w, A_STANDOUT);
         }
 
@@ -471,77 +458,3 @@ int popup_message(render_options_t* options, int nums, ...) {
 
     return 0; // this should be unreachable
 }
-
-
-//int main() {
-//    ui_init();
-//
-//    render_options_t* options = malloc(sizeof(render_options_t));
-//
-//    // init card
-//    options->deck_size = 20;
-//    options->cards = malloc(sizeof(card_t*) * options->deck_size);
-//    for (int i = 0; i < options->deck_size; i++) {
-//        options->cards[i] = malloc(sizeof(card_t));
-//        options->cards[i]->number = i;
-//        options->cards[i]->color= i % 5;
-//    }
-//
-//    // init message
-//    options->message_list = malloc(sizeof(message_list_t));
-//    message_list_init(options->message_list);
-//    for (int i = 0; i < 10; i++) {
-//        char* temp_message = malloc(sizeof(char) * 20);
-//        sprintf(temp_message, "message_%d", i);
-//        message_list_add(options->message_list, temp_message);
-//        free(temp_message);
-//    }
-//
-//    // init game_status
-//    char* random_names[10] = {
-//            "Agnes",
-//            "Tyriq",
-//            "Yuvaan",
-//            "Rhiana",
-//            "Winter",
-//            "Levine",
-//            "Bateman",
-//            "Rowland",
-//            "Kenny",
-//            "Zixuan",
-//    };
-//    options->game_status = malloc(sizeof(game_status_t));
-//    options->game_status->current_player = 0;
-//    options->game_status->direction = -1;
-//    options->game_status->player_count = 10;
-//    options->game_status->players = malloc(sizeof(player_status_t*) * options->game_status->player_count);
-//    for (int i = 0; i < options->game_status->player_count; i++) {
-//        options->game_status->players[i] = malloc(sizeof(player_status_t));
-//        options->game_status->players[i]->player_name = random_names[i];
-//        options->game_status->players[i]->cards_count = rand() % 20;
-//    }
-//
-//    options->game_status->previous_card = malloc(sizeof(card_t));
-//    options->game_status->previous_card->number = 1;
-//    options->game_status->previous_card->color = RED;
-//
-//    render_ui(options);
-//
-//    int res = popup_message(options, 4,
-//                            "RED", "YELLOW", "GREEN", "BLUE");
-//    wprintw(stdscr, "%d\n", res);
-//    refresh();
-//    sleep(2);
-//
-//    int max_width, max_height;
-//    getmaxyx(stdscr, max_height, max_width);
-//
-//    int pick = choose_card_ui(options);
-//    wprintw(stdscr, "%d\n", pick);
-//    wprintw(stdscr, "%d %d", max_width, max_height);
-//    wrefresh(stdscr);
-//
-//    sleep(2);
-//
-//    ui_exit();
-//}

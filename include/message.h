@@ -14,8 +14,8 @@ enum MessageType {
     CARD,
 };
 
-void send_payload(int fd, enum MessageType type, void* payload);
+void send_payload(int fd, enum MessageType type, void *payload);
 
-int receive_payload(int fd, void** payload);
+int receive_payload(int fd, void **payload);
 
 #endif //UNO_MESSAGE_H

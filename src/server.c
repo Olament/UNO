@@ -15,18 +15,19 @@
 // socket buffer
 char buffer[MAX_MESSAGE_LENGTH];
 
-void notify_all(char* message, int* player_fds, int match_size) {
+void notify_all(char *message, int *player_fds, int match_size) {
     for (int i = 0; i < match_size; i++) {
         send_payload(player_fds[i], NOTIFICATION, message);
     }
 }
 
 // move the game to next player
-void next_player(game_status_t* game_status) {
-    game_status->current_player = (game_status->current_player + game_status->direction + game_status->player_count) % game_status->player_count;
+void next_player(game_status_t *game_status) {
+    game_status->current_player = (game_status->current_player + game_status->direction + game_status->player_count) %
+                                  game_status->player_count;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <match_size>\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
     int next_card = 0;
 
     // init the game status
-    game_status_t* game_status = malloc(sizeof(game_status_t));
+    game_status_t *game_status = malloc(sizeof(game_status_t));
     init_game_status(game_status, match_size);
 
     // Open a server socket
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
         }
 
         player_fds[i] = client_socket_fd;
-        receive_payload(client_socket_fd, (void**)&game_status->players[i]->player_name);
+        receive_payload(client_socket_fd, (void **) &game_status->players[i]->player_name);
         printf("player %s connected\n", game_status->players[i]->player_name);
     }
 
@@ -89,7 +90,7 @@ int main(int argc, char** argv) {
         game_status->players[i]->cards_count = INIT_CARDS_SIZE;
     }
 
-    
+
     for (;;) {
         // send the game status to everyone
         int current_fd = player_fds[game_status->current_player];
@@ -108,25 +109,25 @@ int main(int argc, char** argv) {
             }
         }
 
-        
+
         send_payload(current_fd, NOTIFICATION, "Your turn!");
-        
+
         // wait the current player to response
-        void* payload = NULL;
+        void *payload = NULL;
         int type = receive_payload(current_fd, &payload);
 
         if (type == NOTIFICATION) {
             send_payload(current_fd, CARD, &uno_cards[next_card++]); // eventually check for space
             game_status->players[game_status->current_player]->cards_count++;
         } else if (type == CARD) {
-            card_t* card = (card_t*) payload;
+            card_t *card = (card_t *) payload;
             game_status->players[game_status->current_player]->cards_count--;
             game_status->previous_card->type = card->type;
             game_status->previous_card->color = card->color;
             game_status->previous_card->number = card->number;
 
             switch (card->type) {
-                case NUMBER: 
+                case NUMBER:
                     break;
                 case SKIP:
                     next_player(game_status);
@@ -148,8 +149,8 @@ int main(int argc, char** argv) {
                 case WILD:
                 case WILD_DRAW:
                     send_payload(current_fd, NOTIFICATION, "Please select a color");
-                    card_t* wildcard;
-                    receive_payload(current_fd, (void**)&wildcard);
+                    card_t *wildcard;
+                    receive_payload(current_fd, (void **) &wildcard);
                     game_status->previous_card->color = wildcard->color;
                     free(wildcard);
                     if (card->type == WILD_DRAW) {
@@ -159,7 +160,7 @@ int main(int argc, char** argv) {
                         for (int i = 0; i < 4; i++) {
                             send_payload(current_fd, CARD, &uno_cards[next_card++]);
                         }
-                    send_payload(current_fd, NOTIFICATION, "You received four cards and your turn was skipped.");
+                        send_payload(current_fd, NOTIFICATION, "You received four cards and your turn was skipped.");
                     }
 
                     break;
@@ -195,7 +196,7 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
             cards[index].type = NUMBER;
             index++;
             if (number != 0) {
-                cards[index] = cards[index-1];
+                cards[index] = cards[index - 1];
                 index++;
             }
         }
@@ -205,7 +206,7 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
             cards[index].color = color;
             cards[index].number = -1;
             index++;
-            cards[index] = cards[index-1];
+            cards[index] = cards[index - 1];
             index++;
         }
     }
@@ -222,20 +223,20 @@ void init_cards(card_t cards[UNO_DECK_SIZE]) {
 
     // shuffle the cards
     srand(time(NULL));
-    for (int i = UNO_DECK_SIZE-1; i >= 0; i--) {
-        int random_index = rand() % (i+1); // pick a random index between [0, i]
+    for (int i = UNO_DECK_SIZE - 1; i >= 0; i--) {
+        int random_index = rand() % (i + 1); // pick a random index between [0, i]
         card_t temp_card = cards[i];
         cards[i] = cards[random_index];
         cards[random_index] = temp_card;
     }
 }
 
-void init_game_status(game_status_t* status, int match_size) {
+void init_game_status(game_status_t *status, int match_size) {
     status->player_count = match_size;
     status->direction = 1;
     status->current_player = 0;
     status->previous_card = malloc(sizeof(card_t));
-    status->players = malloc(sizeof(player_status_t*) * match_size);
+    status->players = malloc(sizeof(player_status_t *) * match_size);
     for (int i = 0; i < match_size; i++) {
         status->players[i] = malloc(sizeof(player_status_t));
     }

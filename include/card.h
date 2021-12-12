@@ -24,32 +24,42 @@ typedef struct card {
     int number;           // only for NUMBER
 } card_t;
 
-static void print_card(card_t* card) {
+static void print_card(card_t *card) {
     switch (card->color) {
         case RED:
-            printf("RED "); break;
+            printf("RED ");
+            break;
         case YELLOW:
-            printf("YELLOW "); break;
+            printf("YELLOW ");
+            break;
         case GREEN:
-            printf("GREEN "); break;
+            printf("GREEN ");
+            break;
         case BLUE:
-            printf("BLUE "); break;
+            printf("BLUE ");
+            break;
         case NO_COLOR:
             break;
     }
     switch (card->type) {
         case NUMBER:
-            printf("%d\n", card->number); break;
+            printf("%d\n", card->number);
+            break;
         case SKIP:
-            printf("SKIP\n"); break;
+            printf("SKIP\n");
+            break;
         case REVERSE:
-            printf("REVERSE\n"); break;
+            printf("REVERSE\n");
+            break;
         case DRAW_TWO:
-            printf("DRAW_TWO\n"); break;
+            printf("DRAW_TWO\n");
+            break;
         case WILD:
-            printf("WILD\n"); break;
+            printf("WILD\n");
+            break;
         case WILD_DRAW:
-            printf("WILD_DRAW\n"); break;
+            printf("WILD_DRAW\n");
+            break;
         default:
             break;
     }

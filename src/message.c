@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 // Send a message across a socket with a header that includes the message length.
-int send_message(int fd, char* message, size_t message_length) {
+int send_message(int fd, char *message, size_t message_length) {
     // If the message is NULL, set errno to EINVAL and return an error
     if (message == NULL) {
         errno = EINVAL;
@@ -41,7 +41,7 @@ int send_message(int fd, char* message, size_t message_length) {
 }
 
 // Receive a message from a socket and return the message string (which must be freed later)
-char* receive_message(int fd) {
+char *receive_message(int fd) {
     // First try to read in the message length
     size_t len;
     if (read(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
@@ -56,7 +56,7 @@ char* receive_message(int fd) {
     }
 
     // Allocate space for the message
-    char* result = malloc(len + 1);
+    char *result = malloc(len + 1);
 
     // Try to read the message. Loop until the entire message has been read.
     size_t bytes_read = 0;
@@ -79,7 +79,7 @@ char* receive_message(int fd) {
     return result;
 }
 
-int deserialize_int(char* buffer, int* integer) {
+int deserialize_int(char *buffer, int *integer) {
     int number = 0;
     int sign = 1;
     int offset = 0;
@@ -100,7 +100,7 @@ int deserialize_int(char* buffer, int* integer) {
     return offset;
 }
 
-int serialize_card(char* buffer, card_t* card) {
+int serialize_card(char *buffer, card_t *card) {
     int offset = 0;
 
     offset += sprintf(buffer + offset, "%d", card->type) + 1;
@@ -111,18 +111,18 @@ int serialize_card(char* buffer, card_t* card) {
     return offset;
 }
 
-int deserialize_card(char* buffer, card_t** card) {
+int deserialize_card(char *buffer, card_t **card) {
     int offset = 0;
 
     (*card) = malloc(sizeof(card_t));
-    offset += deserialize_int(buffer + offset, (int*)&(*card)->type) + 1;
-    offset += deserialize_int(buffer + offset, (int*)&(*card)->color) + 1;
-    offset += deserialize_int(buffer + offset, (int*)&(*card)->number) + 1;
+    offset += deserialize_int(buffer + offset, (int *) &(*card)->type) + 1;
+    offset += deserialize_int(buffer + offset, (int *) &(*card)->color) + 1;
+    offset += deserialize_int(buffer + offset, (int *) &(*card)->number) + 1;
 
     return offset;
 }
 
-int serialize_player_status(char* buffer, player_status_t* player) {
+int serialize_player_status(char *buffer, player_status_t *player) {
     int offset = 0;
 
     strcpy(buffer, player->player_name);
@@ -133,7 +133,7 @@ int serialize_player_status(char* buffer, player_status_t* player) {
     return offset;
 }
 
-int deserialize_player_status(char* buffer, player_status_t** player) {
+int deserialize_player_status(char *buffer, player_status_t **player) {
     int offset = 0;
 
     (*player) = malloc(sizeof(player_status_t));
@@ -146,7 +146,7 @@ int deserialize_player_status(char* buffer, player_status_t** player) {
     return offset;
 }
 
-int serialize_game_status(char* buffer, game_status_t* status) {
+int serialize_game_status(char *buffer, game_status_t *status) {
     int offset = 0;
 
     offset += sprintf(buffer + offset, "%d", status->player_count) + 1;
@@ -161,7 +161,7 @@ int serialize_game_status(char* buffer, game_status_t* status) {
     return offset;
 }
 
-int deserialize_game_status(char* buffer, game_status_t** status) {
+int deserialize_game_status(char *buffer, game_status_t **status) {
     int offset = 0;
 
     (*status) = malloc(sizeof(game_status_t));
@@ -169,7 +169,7 @@ int deserialize_game_status(char* buffer, game_status_t** status) {
     offset += deserialize_int(buffer + offset, &(*status)->current_player) + 1;
     offset += deserialize_int(buffer + offset, &(*status)->direction) + 1;
     offset += deserialize_card(buffer + offset, &(*status)->previous_card) + 1;
-    (*status)->players = malloc(sizeof(player_status_t*) * (*status)->player_count);
+    (*status)->players = malloc(sizeof(player_status_t *) * (*status)->player_count);
     for (int i = 0; i < (*status)->player_count; i++) {
         offset += deserialize_player_status(buffer + offset, &(*status)->players[i]) + 1;
     }
@@ -177,8 +177,8 @@ int deserialize_game_status(char* buffer, game_status_t** status) {
     return offset;
 }
 
-void send_payload(int fd, enum MessageType type, void* payload) {
-    char* buffer = malloc(sizeof(char) * MAX_MESSAGE_LENGTH);
+void send_payload(int fd, enum MessageType type, void *payload) {
+    char *buffer = malloc(sizeof(char) * MAX_MESSAGE_LENGTH);
     int offset = 0;
 
     // write message type
@@ -203,13 +203,13 @@ void send_payload(int fd, enum MessageType type, void* payload) {
     free(buffer);
 }
 
-int receive_payload(int fd, void** payload) {
-    char* message = receive_message(fd);
-    char* p = message;
+int receive_payload(int fd, void **payload) {
+    char *message = receive_message(fd);
+    char *p = message;
 
     // get the message type
     enum MessageType type;
-    p += deserialize_int(message, (int*)&type) + 1;
+    p += deserialize_int(message, (int *) &type) + 1;
 
     // deserialize the payload
     switch (type) {
@@ -218,10 +218,10 @@ int receive_payload(int fd, void** payload) {
             strcpy(*payload, p);
             break;
         case STATUS:
-            deserialize_game_status(p, (game_status_t**)payload);
+            deserialize_game_status(p, (game_status_t **) payload);
             break;
         case CARD:
-            deserialize_card(p, (card_t**)payload);
+            deserialize_card(p, (card_t **) payload);
             break;
     }
 
