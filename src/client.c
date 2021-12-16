@@ -74,6 +74,10 @@ int main(int argc, char **argv) {
             case NOTIFICATION: {
                 char *notification = (char *) message;
 
+                // add it to message box
+                message_list_add(options->message_list, notification);
+                render_ui(options);
+
                 if (strcmp(notification, "Your turn!") == 0) {
                     // pick a card until we get a valid one
                     int card_index = -1;
@@ -108,9 +112,6 @@ int main(int argc, char **argv) {
                     new_card.color = color_selected + 1; // shift by 1 to skip NO_COLOR;
                     send_payload(socket_fd, CARD, &new_card);
                 }
-
-                // add it to message box
-                message_list_add(options->message_list, notification);
 
                 free(message);
 
