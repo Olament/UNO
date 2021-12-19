@@ -51,6 +51,7 @@ Clone and Repository and set up the output directory
 ```bash
 git clone https://github.com/Olament/UNO.git
 mkdir bin
+make
 ```
 
 ### Server
