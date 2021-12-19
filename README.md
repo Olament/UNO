@@ -68,3 +68,7 @@ Connect to CUNO server with server name, port, and your username
 ```bash
 # Usage: ./bin/client <server name> <port> <username>
 ```
+
+### Control
+
+Use ```WASD``` to navigate your selection, ```enter``` to select and ```space``` to escape from current selection.
