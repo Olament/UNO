@@ -38,6 +38,12 @@ int main(int argc, char **argv) {
     unsigned short port = atoi(argv[2]);
     char *username = argv[3];
 
+    // check username length
+    if (strlen(username) > 10) {
+        perror("username should be shorter than 10 characters");
+        exit(EXIT_FAILURE);
+    }
+
     // Connect to the server
     int socket_fd = socket_connect(server_name, port);
     if (socket_fd == -1) {
@@ -70,6 +76,12 @@ int main(int argc, char **argv) {
     for (;;) {
         void *message = NULL;
         int message_type = receive_payload(socket_fd, &message);
+
+        // check if socket is closed
+        if (message == NULL) {
+            break;
+        }
+
         switch (message_type) {
             case NOTIFICATION: {
                 char *notification = (char *) message;
@@ -133,4 +145,13 @@ int main(int argc, char **argv) {
 
         render_ui(options);
     }
+
+    // clean up
+    ui_exit();
+    message_list_destroy(options->message_list);
+    free(options);
+    for (int i = 0; i < deck_size; i++) {
+        free(player_deck[i]);
+    }
+    free(player_deck);
 }
