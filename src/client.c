@@ -11,6 +11,8 @@
 #include "message.h"
 #include "ui.h"
 
+// Tells whether you can play card "previous"
+// if the card "current" is on top of the deck.
 bool card_match(card_t *previous, card_t *current) {
     if (current->type == WILD || current->type == WILD_DRAW) {
         return true;

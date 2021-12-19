@@ -24,6 +24,7 @@ typedef struct card {
     int number;           // only for NUMBER
 } card_t;
 
+// Print card information -- used in terminal version.
 static void print_card(card_t *card) {
     switch (card->color) {
         case RED:
