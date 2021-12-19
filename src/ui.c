@@ -97,6 +97,11 @@ void ui_init() {
     int max_width, max_height;
     getmaxyx(stdscr, max_height, max_width);
 
+    if (max_width < 80 || max_height < 30) {
+        perror("terminal size should be atleast 80x30");
+        exit(1);
+    }
+
     int start_height = 0;
 
     // create scoreboard windows
@@ -114,6 +119,10 @@ void ui_init() {
                           scoreboard_start_y, scoreboard_start_x);
     scoreboard_content_w = newwin(scoreboard_content_height, scoreboard_content_width,
                                   scoreboard_content_start_y, scoreboard_content_start_x);
+    if (scoreboard_w == NULL || scoreboard_content_w == NULL) {
+        perror("scoreboard windows creation failed!");
+        exit(1);
+    }
 
     int previous_card_start_y = (scoreboard_height - CARD_HEIGHT) / 2;
     int previous_card_start_x =
@@ -121,6 +130,9 @@ void ui_init() {
 
     previous_card_w = newwin(CARD_HEIGHT, CARD_WIDTH,
                              previous_card_start_y, previous_card_start_x);
+    if (previous_card_w == NULL) {
+        perror("previous card windows creation failed!");
+    }
 
     start_height += scoreboard_height;
 
@@ -139,6 +151,11 @@ void ui_init() {
                        message_start_y, message_start_x);
     message_content_w = newwin(message_content_height, message_content_width,
                                message_content_start_y, message_content_start_x);
+    if (message_w == NULL || message_content_w == NULL) {
+        perror("message windows creation failed!");
+        exit(1);
+    }
+
     scrollok(message_content_w, TRUE);
 
     start_height += message_height;
@@ -162,11 +179,19 @@ void ui_init() {
                               card_select_start_y, card_select_start_x);
     draw_button_w = newwin(button_height, BUTTON_WIDTH,
                            button_start_y, button_start_x);
+    if (card_selection_w == NULL || draw_button_w == NULL) {
+        perror("card selection windows creation failed!");
+        exit(1);
+    }
 
     cards_w = malloc(sizeof(WINDOW *) * cards_number);
     for (int i = 0; i < cards_number; i++) {
         cards_w[i] = newwin(CARD_HEIGHT, CARD_WIDTH,
                             card_start_y, card_start_x);
+        if (cards_w[i] == NULL) {
+            perror("card windows creation failed!");
+            exit(1);
+        }
         card_start_x += CARD_WIDTH + PADDING;
     }
 }
