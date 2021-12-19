@@ -12,8 +12,6 @@
 #define DEFAULT_PORT 8888
 #define INIT_CARDS_SIZE 7
 
-// socket buffer
-char buffer[MAX_MESSAGE_LENGTH];
 
 void notify_all(char *message, int *player_fds, int match_size) {
     for (int i = 0; i < match_size; i++) {
@@ -81,9 +79,7 @@ int main(int argc, char **argv) {
     game_status->previous_card->color = rand() % 4 + 1;
     game_status->previous_card->number = rand() % 10;
     for (int i = 0; i < match_size; i++) {
-        send_payload(player_fds[i], NOTIFICATION, "-----------------------------");
-        send_payload(player_fds[i], NOTIFICATION, "Your initial cards:");
-        send_payload(player_fds[i], NOTIFICATION, "-----------------------------");
+        send_payload(player_fds[i], NOTIFICATION, "Here is your initial cards");
         for (int j = 0; j < INIT_CARDS_SIZE; j++) {
             send_payload(player_fds[i], CARD, &uno_cards[next_card++]);
         }
@@ -117,7 +113,11 @@ int main(int argc, char **argv) {
         int type = receive_payload(current_fd, &payload);
 
         if (type == NOTIFICATION) {
-            send_payload(current_fd, CARD, &uno_cards[next_card++]); // eventually check for space
+            if (next_card >= UNO_DECK_SIZE) {
+                notify_all("run out of cards!", player_fds, match_size);
+                break;
+            }
+            send_payload(current_fd, CARD, &uno_cards[next_card++]);
             game_status->players[game_status->current_player]->cards_count++;
         } else if (type == CARD) {
             card_t *card = (card_t *) payload;
@@ -142,8 +142,13 @@ int main(int argc, char **argv) {
                     next_player(game_status);
                     game_status->players[game_status->current_player]->cards_count += 2;
                     current_fd = player_fds[game_status->current_player];
-                    send_payload(current_fd, CARD, &uno_cards[next_card++]);
-                    send_payload(current_fd, CARD, &uno_cards[next_card++]);
+                    for (int i = 0; i < 2; i++) {
+                        if (next_card >= UNO_DECK_SIZE) {
+                            notify_all("run out of cards!", player_fds, match_size);
+                            break;
+                        }
+                        send_payload(current_fd, CARD, &uno_cards[next_card++]);
+                    }
                     send_payload(current_fd, NOTIFICATION, "You received two cards and your turn was skipped.");
                     break;
                 case WILD:
@@ -158,6 +163,10 @@ int main(int argc, char **argv) {
                         game_status->players[game_status->current_player]->cards_count += 4;
                         current_fd = player_fds[game_status->current_player];
                         for (int i = 0; i < 4; i++) {
+                            if (next_card >= UNO_DECK_SIZE) {
+                                notify_all("run out of cards!", player_fds, match_size);
+                                break;
+                            }
                             send_payload(current_fd, CARD, &uno_cards[next_card++]);
                         }
                         send_payload(current_fd, NOTIFICATION, "You received four cards and your turn was skipped.");
@@ -181,6 +190,13 @@ int main(int argc, char **argv) {
 
         next_player(game_status);
     }
+
+    // clean up
+    for (int i = 0; i < match_size; i++) {
+        free(game_status->players[i]->player_name);
+        free(game_status->players[i]);
+    }
+    free(game_status);
 }
 
 void init_cards(card_t cards[UNO_DECK_SIZE]) {
