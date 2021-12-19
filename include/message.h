@@ -14,8 +14,10 @@ enum MessageType {
     CARD,
 };
 
+// send payload through the socket fd with given MessageType
 void send_payload(int fd, enum MessageType type, void *payload);
 
+// receive payload from socket fd, you must free payload after usage
 int receive_payload(int fd, void **payload);
 
 #endif //UNO_MESSAGE_H
