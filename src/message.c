@@ -205,6 +205,11 @@ void send_payload(int fd, enum MessageType type, void *payload) {
 
 int receive_payload(int fd, void **payload) {
     char *message = receive_message(fd);
+    if (message == NULL) {
+        *payload = NULL;
+        return 0;
+    }
+
     char *p = message;
 
     // get the message type
